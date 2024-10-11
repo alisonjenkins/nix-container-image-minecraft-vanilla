@@ -22,8 +22,8 @@
       };
 
       minecraft_start_script_x86_64 = pkgs.writeShellScriptBin "minecraft_start_script" ''
-        ${pkgs.coreutils}/bin/cp ${minecraft_server_properties} /srv/minecraft/server.properties
-        ${pkgs.coreutils}/bin/cp ${minecraft_eula_txt} /srv/minecraft/eula.txt
+        ${pkgs.coreutils}/bin/cp ${minecraft_server_properties_x86_64} /srv/minecraft/server.properties
+        ${pkgs.coreutils}/bin/cp ${minecraft_eula_txt_x86_64} /srv/minecraft/eula.txt
         cd /srv/minecraft
         ${pkgs.corretto21}/bin/java \
           -XX:+AlwaysPreTouch \
@@ -39,8 +39,8 @@
       '';
 
       minecraft_start_script_arm64 = pkgs.writeShellScriptBin "minecraft_start_script" ''
-        ${pkgs_arm64.coreutils}/bin/cp ${minecraft_server_properties} /srv/minecraft/server.properties
-        ${pkgs_arm64.coreutils}/bin/cp ${minecraft_eula_txt} /srv/minecraft/eula.txt
+        ${pkgs_arm64.coreutils}/bin/cp ${minecraft_server_properties_arm64} /srv/minecraft/server.properties
+        ${pkgs_arm64.coreutils}/bin/cp ${minecraft_eula_txt_arm64} /srv/minecraft/eula.txt
         cd /srv/minecraft
         ${pkgs_arm64.corretto21}/bin/java \
           -XX:+AlwaysPreTouch \
@@ -55,7 +55,7 @@
           -jar ${minecraft_server_jar}
       '';
 
-      minecraft_server_properties = pkgs.writeText "server.properties" ''
+      minecraft_server_properties_txt = ''
         accepts-transfers=false
         allow-flight=false
         allow-nether=true
@@ -119,7 +119,14 @@
         white-list=false
       '';
 
-      minecraft_eula_txt = pkgs.writeText "eula.txt" ''
+      minecraft_server_properties_arm64 = pkgs_arm64.writeText "server.properties" minecraft_server_properties_txt;
+      minecraft_server_properties_x86_64 = pkgs.writeText "server.properties" minecraft_server_properties_txt;
+
+      minecraft_eula_txt_arm64 = pkgs.writeText "eula.txt" ''
+        eula=true
+      '';
+
+      minecraft_eula_txt_x86_64 = pkgs_arm64.writeText "eula.txt" ''
         eula=true
       '';
 
