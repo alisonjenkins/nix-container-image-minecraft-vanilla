@@ -21,39 +21,23 @@
         sha256 = "sha256:1fxl66938ixks6imz8c5bry69z0kh6iawq1fiwca1kck7rlmbg73";
       };
 
-      minecraft_start_script_x86_64 = pkgs.writeShellScriptBin "minecraft_start_script" ''
-        ${pkgs.coreutils}/bin/cp ${minecraft_server_properties_x86_64} /srv/minecraft/server.properties
-        ${pkgs.coreutils}/bin/cp ${minecraft_eula_txt_x86_64} /srv/minecraft/eula.txt
-        cd /srv/minecraft
-        ${pkgs.corretto21}/bin/java \
-          -XX:+AlwaysPreTouch \
-          -XX:-DisableExplicitGC \
-          -XX:+UseNUMA \
-          -XX:+UseTransparentHugePages \
-          -XX:+UseShenandoahGC \
-          -XX:+ClassUnloadingWithConcurrentMark \
-          -Dsun.net.client.defaultConnectTimeout=1000 \
-          -Dfml.ignoreInvalidMinecraftCertificates=true \
-          -Dfml.ignorePatchDiscrepancies=true \
-          -jar ${minecraft_server_jar}
-      '';
-
-      minecraft_start_script_arm64 = pkgs.writeShellScriptBin "minecraft_start_script" ''
-        ${pkgs_arm64.coreutils}/bin/cp ${minecraft_server_properties_arm64} /srv/minecraft/server.properties
-        ${pkgs_arm64.coreutils}/bin/cp ${minecraft_eula_txt_arm64} /srv/minecraft/eula.txt
-        cd /srv/minecraft
-        ${pkgs_arm64.corretto21}/bin/java \
-          -XX:+AlwaysPreTouch \
-          -XX:-DisableExplicitGC \
-          -XX:+UseNUMA \
-          -XX:+UseTransparentHugePages \
-          -XX:+UseShenandoahGC \
-          -XX:+ClassUnloadingWithConcurrentMark \
-          -Dsun.net.client.defaultConnectTimeout=1000 \
-          -Dfml.ignoreInvalidMinecraftCertificates=true \
-          -Dfml.ignorePatchDiscrepancies=true \
-          -jar ${minecraft_server_jar}
-      '';
+      minecraft_start_script = {pkgs}:
+        pkgs.writeShellScriptBin "minecraft_start_script" ''
+          ${pkgs.coreutils}/bin/cp ${minecraft_server_properties {inherit pkgs;}} /srv/minecraft/server.properties
+          ${pkgs.coreutils}/bin/cp ${minecraft_eula_txt {inherit pkgs;}} /srv/minecraft/eula.txt
+          cd /srv/minecraft
+          ${pkgs.corretto21}/bin/java \
+            -XX:+AlwaysPreTouch \
+            -XX:-DisableExplicitGC \
+            -XX:+UseNUMA \
+            -XX:+UseTransparentHugePages \
+            -XX:+UseShenandoahGC \
+            -XX:+ClassUnloadingWithConcurrentMark \
+            -Dsun.net.client.defaultConnectTimeout=1000 \
+            -Dfml.ignoreInvalidMinecraftCertificates=true \
+            -Dfml.ignorePatchDiscrepancies=true \
+            -jar ${minecraft_server_jar}
+        '';
 
       minecraft_server_properties_txt = ''
         accepts-transfers=false
@@ -119,16 +103,12 @@
         white-list=false
       '';
 
-      minecraft_server_properties_arm64 = pkgs_arm64.writeText "server.properties" minecraft_server_properties_txt;
-      minecraft_server_properties_x86_64 = pkgs.writeText "server.properties" minecraft_server_properties_txt;
+      minecraft_server_properties = {pkgs}: pkgs.writeText "server.properties" minecraft_server_properties_txt;
 
-      minecraft_eula_txt_arm64 = pkgs_arm64.writeText "eula.txt" ''
-        eula=true
-      '';
-
-      minecraft_eula_txt_x86_64 = pkgs.writeText "eula.txt" ''
-        eula=true
-      '';
+      minecraft_eula_txt = {pkgs}:
+        pkgs.writeText "eula.txt" ''
+          eula=true
+        '';
 
       container_aarch64 = pkgs.pkgsCross.aarch64-multiplatform.dockerTools.buildLayeredImage {
         name = "minecraft";
@@ -138,7 +118,7 @@
           name = "image-root";
           paths = with pkgs.pkgsCross.aarch64-multiplatform; [
             dockerTools.caCertificates
-            minecraft_start_script_arm64
+            (minecraft_start_script {pkgs = pkgs_arm64;})
           ];
           pathsToLink = ["/bin" "/etc" "/var"];
         };
@@ -156,7 +136,7 @@
           name = "image-root";
           paths = with pkgs; [
             dockerTools.caCertificates
-            minecraft_start_script_x86_64
+            (minecraft_start_script {inherit pkgs;})
           ];
           pathsToLink = ["/bin" "/etc" "/var"];
         };
