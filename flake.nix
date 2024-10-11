@@ -122,11 +122,11 @@
       minecraft_server_properties_arm64 = pkgs_arm64.writeText "server.properties" minecraft_server_properties_txt;
       minecraft_server_properties_x86_64 = pkgs.writeText "server.properties" minecraft_server_properties_txt;
 
-      minecraft_eula_txt_arm64 = pkgs.writeText "eula.txt" ''
+      minecraft_eula_txt_arm64 = pkgs_arm64.writeText "eula.txt" ''
         eula=true
       '';
 
-      minecraft_eula_txt_x86_64 = pkgs_arm64.writeText "eula.txt" ''
+      minecraft_eula_txt_x86_64 = pkgs.writeText "eula.txt" ''
         eula=true
       '';
 
