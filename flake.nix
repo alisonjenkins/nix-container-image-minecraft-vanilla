@@ -129,6 +129,10 @@
         contents = pkgs.pkgsCross.aarch64-multiplatform.buildEnv {
           name = "image-root";
           paths = with pkgs.pkgsCross.aarch64-multiplatform; [
+            coreutils
+            rconc
+            neovim
+            dockerTools.binSh
             dockerTools.caCertificates
             (minecraft_start_script {pkgs = pkgs_arm64;})
             (minecraft_prestop_script {pkgs = pkgs_arm64;})
@@ -148,6 +152,10 @@
         contents = pkgs.buildEnv {
           name = "image-root";
           paths = with pkgs; [
+            coreutils
+            rconc
+            neovim
+            dockerTools.binSh
             dockerTools.caCertificates
             (minecraft_start_script {inherit pkgs;})
             (minecraft_prestop_script {inherit pkgs;})
