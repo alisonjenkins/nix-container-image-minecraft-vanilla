@@ -39,7 +39,7 @@
             -Dfml.ignorePatchDiscrepancies=true \
             -jar ${minecraft_server_jar} &
 
-          echo "$?" > /tmp/minecraft.pid
+          echo "$!" > /tmp/minecraft.pid
 
           while true; do
             ${pkgs.coreutils}/bin/sleep 60
