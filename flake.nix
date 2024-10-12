@@ -51,7 +51,7 @@
           enable-command-block=false
           enable-jmx-monitoring=false
           enable-query=false
-          enable-rcon=false
+          enable-rcon=true
           enable-status=true
           enforce-secure-profile=true
           enforce-whitelist=false
