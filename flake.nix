@@ -167,7 +167,6 @@
         packages = [
           pkgs.just
           pkgs.podman
-          pkgs.corretto21
         ];
       };
     });
