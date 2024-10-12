@@ -48,8 +48,7 @@
 
       minecraft_prestop_script = {pkgs}:
         pkgs.writeShellScriptBin "minecraft_prestop_script" ''
-          ${pkgs.rconc}/bin/rconc add mc localhost:25575
-          ${pkgs.rconc}/bin/rconc mc "stop"
+          ${pkgs.rconc}/bin/rconc 127.0.0.1:25575 "stop"
         '';
 
       minecraft_server_properties = {pkgs}:
