@@ -43,6 +43,7 @@
 
           while true; do
             ${pkgs.coreutils}/bin/sleep 60
+            rconc 127.0.0.1:25575 "save-all flush"
           done
         '';
 
