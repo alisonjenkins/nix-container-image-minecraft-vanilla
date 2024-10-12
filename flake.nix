@@ -26,6 +26,7 @@
           ${pkgs.coreutils}/bin/cp ${minecraft_server_properties {inherit pkgs;}} /srv/minecraft/server.properties
           ${pkgs.coreutils}/bin/cp ${minecraft_eula_txt {inherit pkgs;}} /srv/minecraft/eula.txt
           cd /srv/minecraft
+
           ${pkgs.corretto21}/bin/java \
             -XX:+AlwaysPreTouch \
             -XX:-DisableExplicitGC \
@@ -36,7 +37,17 @@
             -Dsun.net.client.defaultConnectTimeout=1000 \
             -Dfml.ignoreInvalidMinecraftCertificates=true \
             -Dfml.ignorePatchDiscrepancies=true \
-            -jar ${minecraft_server_jar}
+            -jar ${minecraft_server_jar} &
+
+          while true; do
+            ${pkgs.coreutils}/bin/sleep 60
+          done
+        '';
+
+      minecraft_prestop_script = {pkgs}:
+        pkgs.writeShellScriptBin "minecraft_prestop_script" ''
+          ${pkgs.rconc}/bin/rconc add mc localhost:25575
+          ${pkgs.rconc}/bin/rconc mc "stop"
         '';
 
       minecraft_server_properties = {pkgs}:
@@ -118,6 +129,7 @@
           paths = with pkgs.pkgsCross.aarch64-multiplatform; [
             dockerTools.caCertificates
             (minecraft_start_script {pkgs = pkgs_arm64;})
+            (minecraft_prestop_script {pkgs = pkgs_arm64;})
           ];
           pathsToLink = ["/bin" "/etc" "/var"];
         };
@@ -136,6 +148,7 @@
           paths = with pkgs; [
             dockerTools.caCertificates
             (minecraft_start_script {inherit pkgs;})
+            (minecraft_prestop_script {inherit pkgs;})
           ];
           pathsToLink = ["/bin" "/etc" "/var"];
         };
@@ -154,6 +167,7 @@
         packages = [
           pkgs.just
           pkgs.podman
+          pkgs.corretto21
         ];
       };
     });
