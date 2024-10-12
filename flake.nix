@@ -39,7 +39,7 @@
             -Dfml.ignorePatchDiscrepancies=true \
             -jar ${minecraft_server_jar} &
 
-          echo "$?" > /tmp/minecraft.pid
+          echo "$!" > /tmp/minecraft.pid
 
           while true; do
             ${pkgs.coreutils}/bin/sleep 60
@@ -129,13 +129,14 @@
         contents = pkgs.pkgsCross.aarch64-multiplatform.buildEnv {
           name = "image-root";
           paths = with pkgs.pkgsCross.aarch64-multiplatform; [
+            (minecraft_prestop_script {pkgs = pkgs_arm64;})
+            (minecraft_start_script {pkgs = pkgs_arm64;})
             coreutils
-            rconc
-            neovim
             dockerTools.binSh
             dockerTools.caCertificates
-            (minecraft_start_script {pkgs = pkgs_arm64;})
-            (minecraft_prestop_script {pkgs = pkgs_arm64;})
+            iproute2
+            neovim
+            rconc
           ];
           pathsToLink = ["/bin" "/etc" "/var"];
         };
@@ -152,13 +153,14 @@
         contents = pkgs.buildEnv {
           name = "image-root";
           paths = with pkgs; [
+            (minecraft_prestop_script {inherit pkgs;})
+            (minecraft_start_script {inherit pkgs;})
             coreutils
-            rconc
-            neovim
             dockerTools.binSh
             dockerTools.caCertificates
-            (minecraft_start_script {inherit pkgs;})
-            (minecraft_prestop_script {inherit pkgs;})
+            iproute2
+            neovim
+            rconc
           ];
           pathsToLink = ["/bin" "/etc" "/var"];
         };
