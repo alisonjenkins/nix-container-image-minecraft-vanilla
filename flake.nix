@@ -24,10 +24,13 @@
       minecraft_start_script = {pkgs}:
         pkgs.writeShellScriptBin "minecraft_start_script" ''
           function sigterm_handler() {
+            echo "SIGTERM handler triggered"
             ${pkgs.rconc}/bin/rconc 127.0.0.1:25575 "stop"
-            while kill -0 $(${pkgs.coreutils}/bin/cat /tmp/minecraft.pid); do
+            echo "Waiting for minecraft to stop..."
+            while ${pkgs.procps}/bin/kill -0 $(${pkgs.coreutils}/bin/cat /tmp/minecraft.pid) &>/dev/null; do
               sleep 0.1
             done
+            echo "Minecraft stopped"
           }
           trap sigterm_handler SIGTERM
 
@@ -49,7 +52,7 @@
 
           echo "$!" > /tmp/minecraft.pid
 
-          while true; do
+          while ${pkgs.procps}/bin/kill -0 $(${pkgs.coreutils}/bin/cat /tmp/minecraft.pid) &>/dev/null; do
             ${pkgs.coreutils}/bin/sleep 60
             ${pkgs.rconc}/bin/rconc 127.0.0.1:25575 "save-all flush"
           done
