@@ -39,15 +39,7 @@
           cd /srv/minecraft
 
           ${pkgs.corretto21}/bin/java \
-            -XX:+AlwaysPreTouch \
-            -XX:-DisableExplicitGC \
-            -XX:+UseNUMA \
-            -XX:+UseTransparentHugePages \
-            -XX:+UseShenandoahGC \
-            -XX:+ClassUnloadingWithConcurrentMark \
-            -Dsun.net.client.defaultConnectTimeout=1000 \
-            -Dfml.ignoreInvalidMinecraftCertificates=true \
-            -Dfml.ignorePatchDiscrepancies=true \
+            $JAVA_ARGS \
             -jar ${minecraft_server_jar} &
 
           echo "$!" > /tmp/minecraft.pid
