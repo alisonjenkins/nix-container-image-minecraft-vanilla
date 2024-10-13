@@ -23,6 +23,14 @@
 
       minecraft_start_script = {pkgs}:
         pkgs.writeShellScriptBin "minecraft_start_script" ''
+          function sigterm_handler() {
+            ${pkgs.rconc}/bin/rconc 127.0.0.1:25575 "stop"
+            while kill -0 $(${pkgs.coreutils}/bin/cat /tmp/minecraft.pid); do
+              sleep 0.1
+            done
+          }
+          trap sigterm_handler SIGTERM
+
           ${pkgs.coreutils}/bin/cp ${minecraft_server_properties {inherit pkgs;}} /srv/minecraft/server.properties
           ${pkgs.coreutils}/bin/cp ${minecraft_eula_txt {inherit pkgs;}} /srv/minecraft/eula.txt
           cd /srv/minecraft
@@ -43,13 +51,8 @@
 
           while true; do
             ${pkgs.coreutils}/bin/sleep 60
-            rconc 127.0.0.1:25575 "save-all flush"
+            ${pkgs.rconc}/bin/rconc 127.0.0.1:25575 "save-all flush"
           done
-        '';
-
-      minecraft_prestop_script = {pkgs}:
-        pkgs.writeShellScriptBin "minecraft_prestop_script" ''
-          ${pkgs.rconc}/bin/rconc 127.0.0.1:25575 "stop"
         '';
 
       minecraft_server_properties = {pkgs}:
@@ -129,13 +132,9 @@
         contents = pkgs.pkgsCross.aarch64-multiplatform.buildEnv {
           name = "image-root";
           paths = with pkgs.pkgsCross.aarch64-multiplatform; [
-            (minecraft_prestop_script {pkgs = pkgs_arm64;})
             (minecraft_start_script {pkgs = pkgs_arm64;})
-            coreutils
             dockerTools.binSh
             dockerTools.caCertificates
-            iproute2
-            neovim
             rconc
           ];
           pathsToLink = ["/bin" "/etc" "/var"];
@@ -153,13 +152,10 @@
         contents = pkgs.buildEnv {
           name = "image-root";
           paths = with pkgs; [
-            (minecraft_prestop_script {inherit pkgs;})
             (minecraft_start_script {inherit pkgs;})
             coreutils
             dockerTools.binSh
             dockerTools.caCertificates
-            iproute2
-            neovim
             rconc
           ];
           pathsToLink = ["/bin" "/etc" "/var"];
