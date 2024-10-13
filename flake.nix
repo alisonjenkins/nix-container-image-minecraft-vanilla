@@ -28,7 +28,7 @@
             ${pkgs.rconc}/bin/rconc 127.0.0.1:25575 "stop"
             echo "Waiting for minecraft to stop..."
             while ${pkgs.procps}/bin/kill -0 $(${pkgs.coreutils}/bin/cat /tmp/minecraft.pid) &>/dev/null; do
-              sleep 0.1
+              ${pkgs.coreutils}/bin/sleep 0.1
             done
             echo "Minecraft stopped"
           }
