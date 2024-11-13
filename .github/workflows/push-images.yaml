@@ -29,7 +29,10 @@ jobs:
       - uses: DeterminateSystems/flake-checker-action@main
       - uses: docker/setup-qemu-action@v3
       - name: Run `nix build`
-        run: nix develop --command bash -c "nix-fast-build --no-nom --flake '.#packages'"
+        run: |
+          nix develop --command bash -c "nix-fast-build --no-nom --flake '.#packages'"
+          echo "Listing the dir"
+          ls
       - name: Login to ECR
         run: nix develop --command bash -c "aws ecr get-login-password --region ${{ secrets.REPO_ECR_REGION }}" | podman login --username AWS --password-stdin ${{ secrets.ACCOUNT_ECR_REPO }}
       - name: Create and push manifest
@@ -41,3 +44,4 @@ jobs:
           podman manifest add "$REPO:$TAG" docker-archive:container_x86_64 &
           wait
           podman manifest push --all --rm "$REPO:$TAG" "docker://$REPO:$TAG"
+          echo "Pushed: $REPO:$TAG"
