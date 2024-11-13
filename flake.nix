@@ -13,6 +13,8 @@
           inherit system;
         };
 
+        lib = pkgs.lib;
+
         pkgs_arm64 = import inputs.nixpkgs {
           system = "aarch64-linux";
         };
@@ -163,6 +165,13 @@
         };
       in
       {
+        checks =
+          let
+            packages = lib.mapAttrs' (n: lib.nameValuePair "package-${n}") self.packages;
+            devShells = lib.mapAttrs' (n: lib.nameValuePair "devShell-${n}") self.devShells;
+          in
+          packages // devShells;
+
         packages = {
           container_x86_64 = container_x86_64;
           container_aarch64 = container_aarch64;
@@ -171,6 +180,7 @@
         devShells.default = pkgs.mkShell {
           packages = [
             pkgs.just
+            pkgs.nix-fast-build
             pkgs.podman
           ];
         };
