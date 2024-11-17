@@ -28,7 +28,6 @@
         let
           archSuffix = if targetSystem == "x86_64-linux" then "amd64" else "arm64";
 
-
           minecraft_server_jar = builtins.fetchurl {
             url = "https://piston-data.mojang.com/v1/objects/45810d238246d90e811d896f87b14695b7fb6839/server.jar";
             sha256 = "sha256:1ddgz0dh830869v82q0cp3zkyanl1p45f7ccbvgrr0y00advhlz1";
@@ -144,7 +143,7 @@
         pkgs.dockerTools.buildLayeredImage {
           name = imageName;
           tag = "${imageTag}-${archSuffix}";
-          copyToRoot = pkgs.buildEnv {
+          content = pkgs.buildEnv {
             name = "image-root";
             paths = container_packages { inherit pkgs; };
             pathsToLink = [ "/bin" "/etc" "/var" ];
