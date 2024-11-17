@@ -158,20 +158,8 @@
       packages = forEachSupportedSystem (
         system:
         let
-          testPkgs = import inputs.nixpkgs { inherit system; };
-          crossPkgs = (if testPkgs.stdenv.isx86_64 then (import inputs.nixpkgs { localSystem = "aarch64-linux"; }) else (import inputs.nixpkgs { localSystem = "x86_64-linux"; }));
           pkgs = import inputs.nixpkgs {
             inherit system;
-            overlays = [
-              (self: super: {
-                inherit (crossPkgs)
-                  coreutils
-                  corretto21
-                  procps
-                  rconc
-                  ;
-              })
-            ];
           };
 
           buildForLinux =
@@ -185,7 +173,12 @@
                   crossSystem = targetSystem;
                   overlays = [
                     (self: super: {
-                      inherit (crossPkgs);
+                      inherit (crossPkgs)
+                        coreutils
+                        corretto21
+                        procps
+                        rconc
+                        ;
                     })
                   ];
                 })
