@@ -143,7 +143,7 @@
         pkgs.dockerTools.buildLayeredImage {
           name = imageName;
           tag = "${imageTag}-${archSuffix}";
-          content = pkgs.buildEnv {
+          contents = pkgs.buildEnv {
             name = "image-root";
             paths = container_packages { inherit pkgs; };
             pathsToLink = [ "/bin" "/etc" "/var" ];
