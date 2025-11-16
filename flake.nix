@@ -1,6 +1,7 @@
 {
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
+    nixpkgs_stable.url = "github:nixos/nixpkgs/nixos-24.05";
   };
 
   outputs = { ... }@inputs:
@@ -39,15 +40,15 @@
                 echo "SIGTERM handler triggered"
                 ${pkgs.rconc}/bin/rconc 127.0.0.1:25575 "stop"
                 echo "Waiting for minecraft to stop..."
-                while ${pkgs.procps}/bin/kill -0 $(${pkgs.coreutils}/bin/cat /tmp/minecraft.pid) &>/dev/null; do
+                while ${pkgs.coreutils}/bin/kill -0 $(${pkgs.coreutils}/bin/cat /tmp/minecraft.pid) &>/dev/null; do
                   ${pkgs.coreutils}/bin/sleep 0.1
                 done
                 echo "Minecraft stopped"
               }
               trap sigterm_handler SIGTERM
 
-              ${pkgs.coreutils}/bin/cp ${minecraft_server_properties {inherit pkgs;}} /srv/minecraft/server.properties
-              ${pkgs.coreutils}/bin/cp ${minecraft_eula_txt {inherit pkgs;}} /srv/minecraft/eula.txt
+              cp ${minecraft_server_properties {inherit pkgs;}} /srv/minecraft/server.properties
+              cp ${minecraft_eula_txt {inherit pkgs;}} /srv/minecraft/eula.txt
               cd /srv/minecraft
 
               ${pkgs.corretto21}/bin/java \
@@ -56,7 +57,7 @@
 
               echo "$!" > /tmp/minecraft.pid
 
-              while ${pkgs.procps}/bin/kill -0 $(${pkgs.coreutils}/bin/cat /tmp/minecraft.pid) &>/dev/null; do
+              while ${pkgs.coreutils}/bin/kill -0 $(${pkgs.coreutils}/bin/cat /tmp/minecraft.pid) &>/dev/null; do
                 ${pkgs.coreutils}/bin/sleep 60
                 ${pkgs.rconc}/bin/rconc 127.0.0.1:25575 "save-all flush"
               done
@@ -134,34 +135,37 @@
 
           container_packages = { pkgs }: with pkgs; [
             (minecraft_start_script { inherit pkgs; })
-            coreutils
-            dockerTools.binSh
-            dockerTools.caCertificates
             rconc
           ];
         in
-        pkgs.dockerTools.buildLayeredImage {
+        pkgs.dockerTools.buildImage {
           name = imageName;
           tag = "${imageTag}-${archSuffix}";
-          contents = pkgs.buildEnv {
+          copyToRoot = pkgs.buildEnv {
             name = "image-root";
             paths = container_packages { inherit pkgs; };
             pathsToLink = [ "/bin" "/etc" "/var" ];
           };
-          fakeRootCommands = ''
-            mkdir /tmp
-            chmod 1777 /tmp
-          '';
         };
     in
     {
       packages = forEachSupportedSystem (
         system:
         let
-          testPkgs = import inputs.nixpkgs { inherit system; };
-          crossPkgs = (if testPkgs.stdenv.isx86_64 then (import inputs.nixpkgs { localSystem = "aarch64-linux"; }) else (import inputs.nixpkgs { localSystem = "x86_64-linux"; }));
+          # testPkgs = import inputs.nixpkgs { inherit system; };
+          # crossPkgs = (if testPkgs.stdenv.isx86_64 then (import inputs.nixpkgs { localSystem = "aarch64-linux"; }) else (import inputs.nixpkgs { localSystem = "x86_64-linux"; }));
           pkgs = import inputs.nixpkgs {
             inherit system;
+            overlays = [
+              (
+                final: _prev: {
+                  stable = import inputs.nixpkgs_stable {
+                    system = final.system;
+                    config.allowUnfree = true;
+                  };
+                }
+              )
+            ];
           };
 
           buildForLinux =
@@ -174,14 +178,21 @@
                   localSystem = system;
                   crossSystem = targetSystem;
                   overlays = [
-                    (self: super: {
-                      inherit (crossPkgs)
-                        coreutils
-                        corretto21
-                        procps
-                        rconc
-                        ;
-                    })
+                    (final: prev: {
+                      corretto21 = prev.corretto21.overrideAttrs (oldAttrs: {
+                        nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ prev.zip ];
+                      });
+                    }
+                    )
+                    (
+                      final: _prev: {
+                        stable = import inputs.nixpkgs_stable {
+                          localSystem = system;
+                          crossSystem = targetSystem;
+                          config.allowUnfree = true;
+                        };
+                      }
+                    )
                   ];
                 })
                 targetSystem;
@@ -204,6 +215,7 @@
               packages = [
                 pkgs.just
                 pkgs.nix-fast-build
+                pkgs.podman
               ];
             };
           }
